@@ -1,5 +1,10 @@
-'use strict'
-
+'use strict';
+/**
+ * @description 
+ * @author Justin Mathews
+ * @class BulkLoad
+ * @extends {require('./StreamParser.js')}
+ */
 class BulkLoad extends require('./StreamParser.js') {
   constructor(source, map, destination, config) {
     super(map.STRUCTURE.DELIMITER, map.COLUMNS, config.xformer);
@@ -31,32 +36,60 @@ class BulkLoad extends require('./StreamParser.js') {
     this.on('close', function () {
       console.log('close');
     });
-  };
-
+  }
+  /**
+   * @description 
+   * @author Justin Mathews
+   * @memberof BulkLoad
+   */
   run() {
     //console.log(this)
     this._sourceStream.pipe(this);
-  };
-
+  }
+  /**
+   * @description 
+   * @author Justin Mathews
+   * @param {any} object 
+   * @param {any} config 
+   * @returns 
+   * @memberof BulkLoad
+   */
   _openOutput(object, config) {
     //chech object exists
     //check config
     return Object.create(object)(config);
-  };
-
+  }
+  /**
+   * @description 
+   * @author Justin Mathews
+   * @param {any} source 
+   * @returns 
+   * @memberof BulkLoad
+   */
   _openInput(source) {
     //check if file
     //check if file exists
     //return stream 
     //console.log(require('fs').createReadStream(source))
     return require('fs').createReadStream(source);
-  };
-
+  }
+  /**
+   * @description 
+   * @author Justin Mathews
+   * @param {any} output 
+   * @param {any} data 
+   * @memberof BulkLoad
+   */
   _pushDataOut(output, data) {
     //output ? output.insertMany(_output.DBschema, _output.DBtable, data) : toScreen(data);
     output ? output.insertMany(data) : this._toScreen(data);
-  };
-
+  }
+  /**
+   * @description 
+   * @author Justin Mathews
+   * @param {any} feed 
+   * @memberof BulkLoad
+   */
   _pushData(feed) {
     this.pause();
     this._collection.push(feed);
@@ -65,13 +98,18 @@ class BulkLoad extends require('./StreamParser.js') {
       this._collection = []
     };
     this.resume();
-  };
-
+  }
+  /**
+   * @description 
+   * @author Justin Mathews
+   * @param {any} data 
+   * @memberof BulkLoad
+   */
   _toScreen(data) {
     data.forEach(element => {
       console.log(element);
     });
-  };
-};
+  }
+}
 
 module.exports = BulkLoad;

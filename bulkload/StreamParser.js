@@ -1,9 +1,14 @@
-'use strict'
+'use strict';
 
 var defaultConfig = {
   objectMode: true
 };
-
+/**
+ * @description 
+ * @author Justin Mathews
+ * @class Xformer
+ * @extends {require('stream').Transform}
+ */
 class Xformer extends require('stream').Transform {
   constructor(delimiter, map, config) {
     config.objectMode = true; //override to ensure string management
@@ -13,8 +18,16 @@ class Xformer extends require('stream').Transform {
     this._lastLineData = null;
     this._mapKeys = (map instanceof Array) ? map : Object.keys(map);
     this._parser = (this._delimiter) ? this._parseDelimiter : this._parseFixed;
-  };
-
+  }
+  /**
+   * @description 
+   * @author Justin Mathews
+   * @param {any} line 
+   * @param {any} map 
+   * @param {any} mapKeys 
+   * @returns 
+   * @memberof Xformer
+   */
   _parseDelimiter(line, map, mapKeys) {
     let _line = line.toString();
 
@@ -32,8 +45,16 @@ class Xformer extends require('stream').Transform {
       _fieldCount++;
     });
     return jsonPart;
-  };
-
+  }
+  /**
+   * @description 
+   * @author Justin Mathews
+   * @param {any} line 
+   * @param {any} map 
+   * @param {any} mapKeys 
+   * @returns 
+   * @memberof Xformer
+   */
   _parseFixed(line, map, mapKeys) {
     let _line = line.toString();
     console.log(_line)
@@ -42,8 +63,15 @@ class Xformer extends require('stream').Transform {
       jsonPart[_key] = _line.substring(map[_key].start, map[_key].end).trim();
     });
     return jsonPart;
-  };
-
+  }
+  /**
+   * @description 
+   * @author Justin Mathews
+   * @param {any} chunk 
+   * @param {any} encoding 
+   * @param {any} done 
+   * @memberof Xformer
+   */
   _transform(chunk, encoding, done) {
     let error = null;
     try {
@@ -61,19 +89,24 @@ class Xformer extends require('stream').Transform {
         _lines.forEach(_line => {
           this.push(this._parser(_line, this._map, this._mapKeys));
         });
-      };
+      }
     } catch (err) {
       error = err
-    };
+    }
     //call callback...its required
     done(error);
-  };
+  }
 
-  //left over chunks in stream
+  /**
+   * @description 
+   * @author Justin Mathews
+   * @param {any} done 
+   * @memberof Xformer
+   */
   _flush(done) {
     done(null, this._lastLineData);
-  };
+  }
 
-};
+}
 
 module.exports = Xformer

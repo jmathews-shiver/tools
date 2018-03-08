@@ -11,20 +11,24 @@ class Mongoose extends require('mongoose').Mongoose {
         // this.connection.on('disconnected', () => console.log('Disconnected connection to Mongo DB ' + this.name));
 
         this.db = this.connect(this.URI, this.Options);
-    };
-
+    }
+    /**
+     * @description 
+     * @author Justin Mathews
+     * @memberof Mongoose
+     */
     closeConnections() {
         this.disconnect();
-    };
-};
+    }
+}
 
 module.exports = Mongoose;
 
 
-const Mongoose = require('./Mongoose.js');
-const config = {
-    Name: 'db connection name',
-    URI: 'db connection path mongodb://',
-    Options: {}
-};
-const DB1 = new Mongoose(config);
+// const Mongoose = require('./Mongoose.js');
+// const config = {
+//     Name: 'db connection name',
+//     URI: 'db connection path mongodb://',
+//     Options: {}
+// };
+// const DB1 = new Mongoose(config);

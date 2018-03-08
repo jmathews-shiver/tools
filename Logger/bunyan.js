@@ -1,28 +1,39 @@
 'use strict';
 const bunyan = require('bunyan');
 
-const options = {
-    name: 'logger',
-    serializers: {
-        sessionStart: this.sessionStart,
-        sessionEnd: this.sessionEnd,
-        sessionError: this.sessionError,
-        systemMessage: this.systemMessage
-    },
-    streams: [{
-        type: 'rotating-file',
-        period: '1d',   // daily rotation
-        count: 3,        // keep 3 back copies
-        path: 'logger.log',
-        level: 'trace',
-    }]
-};
-
+// const options = {
+//     name: 'logger',
+//     serializers: {
+//         sessionStart: this.sessionStart,
+//         sessionEnd: this.sessionEnd,
+//         sessionError: this.sessionError,
+//         systemMessage: this.systemMessage
+//     },
+//     streams: [{
+//         type: 'rotating-file',
+//         period: '1d',   // daily rotation
+//         count: 3,        // keep 3 back copies
+//         path: 'logger.log',
+//         level: 'trace',
+//     }]
+// };
+/**
+ * @description 
+ * @author Justin Mathews
+ * @class Logger
+ * @extends {require('bunyan')}
+ */
 class Logger extends require('bunyan') {
     constructor(options) {
-        super(opions);
-    };
-
+        super(options);
+    }
+    /**
+     * @description 
+     * @author Justin Mathews
+     * @param {any} req 
+     * @returns 
+     * @memberof Logger
+     */
     sessionStart(req) {
         return {
             date: new Date(),
@@ -44,14 +55,26 @@ class Logger extends require('bunyan') {
                 body: req.body
             }
         };
-    };
-
-    sessionEnd(){};
-
-    sessionError(){};
-
-    systemMessage(){};
-};
+    }
+    /**
+     * @description 
+     * @author Justin Mathews
+     * @memberof Logger
+     */
+    sessionEnd() {}
+    /**
+     * @description 
+     * @author Justin Mathews
+     * @memberof Logger
+     */
+    sessionError() {}
+    /**
+     * @description 
+     * @author Justin Mathews
+     * @memberof Logger
+     */
+    systemMessage() {}
+}
 
 
 module.exports = Logger;

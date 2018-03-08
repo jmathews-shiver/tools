@@ -1,141 +1,162 @@
 'use strict';
-const DefaultErrorCode = 999;
+const Joi = require('joi');
 
-const certs = {
-    isServer: true,
-    requestCert: true,
-    rejectUnauthorized: true,
-    pfx: fs.readFileSync('SERVER.pfx'),
-    passphrase: 'XXXXX!'
+const DefaultWebConfig = {
+    ip: process.env.API_IP || '0.0.0.0',
+    port: process.env.API_PORT || 3000,
+    certs: {
+        pfx: undefined,
+        passphrase: undefined
+    },
+    apiRoutes: undefined,
+    systemMiddleware: {
+        sessionSecurity: [require('helmet')()],
+        sessionLogging: undefined,
+        systemCORS: (req, res, next) => {
+            res.header('Access-Control-Allow-Origin', '*');
+            res.header('Access-Control-Allow-Methods', '*');
+            res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+            next();
+        },
+        sessionBodyParser: [
+            require('body-parser').urlencoded({
+                extended: false
+            }),
+            require('body-parser').json({
+                reviver: (key, value) => {
+                    const dateTimeRegExp = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/;
+                    return (typeof value === 'string' && dateTimeRegExp.test(value)) ? new Date(value) : value;
+                }
+            })
+        ],
+        responseFormattor: require('../routes/responseFormattorDefault.js'),
+        responseErrorFormattor: require('../routes/errorResponseFormattorDefault.js'),
+        healthCheckRoute: require('../routes/healthCheck.js'),
+        errorLogging: undefined
+    }
 };
 
-class WebServer {
-    constructor(ip, port, routes, logger, CORS) {
-        this.ip = ip;
-        this.port = port;
-        this.routes = routes;
-        this.logger = logger;
-        this.CORS = CORS;
-        this.httpServer = this._createServer();
-    };
+/**
+ * @description 
+ * @author Justin Mathews
+ * @class Server
+ */
+class Server {
+    constructor(options) {
+        let _config = Object.assign(DefaultWebConfig, options);
+        let _systemMiddleware = _config.systemMiddleware;
 
-    _createServer() {
-        const https = require('http');
-        const bodyParser = require('body-parser');
-        const helmet = require('helmet');
-        const express = require('express');
-        let app = express();
-        //enable security
-        app.use(helmet());
-        app.use(bodyParser.urlencoded({ extended: false }));
-        // Will parse incoming JSON requests and revive ISO 8601 date strings to
-        // instances of Date.
-        app.use(bodyParser.json({ reviver: this.reviveDates }));
-        // Enable CORS since we want to allow the API to be consumed by domains
-        // other than the one the API is hosted from.
-        //app.use(this.enableCORS);
-        app.use(this._startSession);
-        app.use(this._logNewSession(this.logger));
-        app.use(this.enableCORS(this.CORS));
-        // Mount the router at /api so all routes start with /api
-        this._buildRoutes(this.routes);
-        // Mount the unexpected error hander last
-        app.use(this.handleUnexpectedError(this.logger));
-        // httpServer = https.createServer(certs, app);
-        app.use(this.closeSession(this.logger));
-        // Add an event handler to the connection event of the http server
-        // to track open http connections.
-        //httpServer.on('connection', this._trackConnection);
-        //this.httpServer = https.createServer(certs, app).listen(this.port, this.ip);
-        return http.createServer(this.app);
-    };
-
-    _trackConnection(conn) {
-        const key = conn.remoteAddress + ':' + (conn.remotePort || '');
-        openHttpConnections[key] = conn;
-        conn.on('close', () => {
-            delete openHttpConnections[key];
+        Joi.validate({
+            ip: _config.ip,
+            port: _config.port
+        }, Joi.object().keys({
+            ip: Joi.string().ip(),
+            port: Joi.number().min(3000).max(5000)
+        }), (err, valid) => {
+            if (err) throw err;
+            this.ip = valid.ip;
+            this.port = valid.port;
         });
-    };
 
-    _buildRoutes(web, routes) {
-        if (!(routes instanceof Array)) throw new Error('not array');
-        if (routes.length === 0) throw new Error('array empty');
-        routes.forEach(function (value) {
-            web.use(value.Path, value.RouterObject);
+        this._buildMiddlewareArray(_systemMiddleware.sessionSecurity); //stage session security middleware
+        this._buildMiddlewareArray(_systemMiddleware.sessionLogging); //stage session logging middleware
+        this._buildMiddlewareArray(_systemMiddleware.systemCORS); //stage CORS middleware
+        this._buildMiddlewareArray(_systemMiddleware.sessionBodyParser); //stage BodyParser middleware
+        if (_config.apiRoutes) {
+            this._buildMiddlewareArray(_config.apiRoutes)
+        } else {
+            throw new Error('Unable to build server without user defined endpoints')
+        } //stage API routes and throw error if non provided
+        this._buildMiddlewareArray(_systemMiddleware.healthCheckRoute); //stage the route used to perform a healthcheck
+        this._buildMiddlewareArray(_systemMiddleware.responseFormattor); //stage API response formattor
+        this._buildMiddlewareArray(_systemMiddleware.responseErrorFormattor); //stage API Error response formattor
+        this.app = require('express')();
+        this._loadMiddleware(this.app, this.middleware); //load all staged middleware
+        this.server = (this._isHTTPS(_config)) ? require('https').createServer(this.certs, this.app) : require('http').createServer(this.app);
+    }
+
+    
+    /**
+     * @description 
+     * @author Justin Mathews
+     * @param {any} options 
+     * @returns 
+     * @memberof Server
+     */
+    _isHTTPS(options) {
+        let _isHTTPS = false;
+        if (!options.certs || !options.certs.pfx) return _isHTTPS;
+        Joi.validate(options.certs, Joi.object().keys({
+            isServer: Joi.boolean().default(true),
+            requestCert: Joi.boolean().default(false),
+            rejectUnauthorized: Joi.boolean().default(true),
+            pfx: Joi.string().required(),
+            passphrase: Joi.string().required()
+        }), (err, valid) => {
+            if (err) throw err;
+            this.certs = valid;
+            _isHTTPS = true;
         });
-    };
+        return _isHTTPS;
+    }
 
-    _startSession(req, res, next) {
-        req.out = {
-            sessionID: new Date().getTime(),
-            status: DefaultErrorCode,
-            message: "System error",
-            token: undefined,
-            payload: {}
-        };
-        next();
-    };
+    /**
+     * @description 
+     * @author Justin Mathews
+     * @param {any} object 
+     * @memberof Server
+     */
+    _buildMiddlewareArray(object) {
+        if (!this.middleware) this.middleware = Object.create([]);
+        if (object) {
+            if (object instanceof Array) {
+                object.forEach(element => {
+                    if (element.constructor !== Function) throw new Error('Improper middleware value');
+                    this.middleware.push(element);
+                });
+            } else {
+                if (object.constructor !== Function) throw new Error('Improper middleware value');
+                this.middleware.push(object);
+            }
+        }
+    }
 
-    _logNewSession(logger) {
-        return (req, res, next) => {
-            logger.info({ sessionStart: req });
-            next();
-        };
-    };
-
-    start() {
-        this.httpServer.listen(this.port, this.ip);
-    };
-
-    closeSession(logger) {
-        return (req, res, next) => {
-            if (req.out.status === 999) req.out.status = 200;
-            this.logger.info('close');//{ err: err });
-            res.status(req.out.status).json(req.out);
-            next();
-        };
-    };
-
-    handleUnexpectedError(logger) {
-        return (err, req, res, next) => {
-            try {
-                req.out.status = err.status;
-                req.out.message = err.message;
-            } catch (err) {
-                console.log(err)
-                req.out.status = 500;
-                req.out.message = "System error";
-            } finally {
-                logger.info({ sessionError: err }, req.out.sessionID);
-                next();
-            };
-        };
-    };
-
-    reviveDates(key, value) {
-        const dateTimeRegExp = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/;
-        return (typeof value === 'string' && dateTimeRegExp.test(value)) ? new Date(value) : value;
-    };
-
-    enableCORS(CORS) {
-        if (CORS === undefined) { console.log('no cors'); return };
-        if (!(CORS instanceof Array)) throw new Error('not array');
-        if (CORS.length === 0) { console.log('empty cors'); return };
-        return (req, res, next) => {
-            CORS.forEach(function (value) {
-                res.header(value.Name, value.Value);
+    /**
+     * @description 
+     * @author Justin Mathews
+     * @param {any} server 
+     * @param {any} array 
+     * @memberof Server
+     */
+    _loadMiddleware(server, array) {
+        if (array instanceof Array) {
+            array.forEach(element => {
+                // console.log(element); 
+                server.use(element);
             });
-            next();
-        };
-    };
+        }
+    }
 
+    /**
+     * @description 
+     * @author Justin Mathews
+     * @memberof Server
+     */
+    start() {
+        this.server.listen(this.port, this.ip, () => {
+            // if (err) console.log('bob')
+            console.log('Started ' + this.ip + ':' + this.port)
+        });
+    }
+
+    /**
+     * @description 
+     * @author Justin Mathews
+     * @memberof Server
+     */
     stop() {
-        this.httpServer.close
-    };
-};
+        this.server.close();
+    }
+}
 
-
-module.exports = WebServer;
-module.exports.start = WebServer.start;
-module.exports.stop = WebServer.stop;
+module.exports = Server;
