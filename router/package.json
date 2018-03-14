@@ -1,0 +1,15 @@
+{
+  "name": "Router",
+  "version": "1.0.0",
+  "description": "This module supports a dynamic means of creating a route chain quickly and consistently.",
+  "main": "Router.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Justin Mathews",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.16.2"
+  }
+}
