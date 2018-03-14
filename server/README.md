@@ -1,25 +1,25 @@
 # (DC) Express server module
 
-[TOC]
-
 # Getting Started
-
 This module supports a dynamic means of creating a HTTP(S) server quickly and consistently. The server is created by passing an object that will override any predefined configurations. 
 
-#Server (class)
+## Server (class)
 The Server class provides abstraction of Express. Configuration is passed, as an object, during class instantiation
-##Usage
+
+## Usage
 ```
 const serverConfig = {}
 const server = new (require('server.js'))(serverConfig)
 ```
-##Errors
-###Improper middleware value
+
+## Errors
+### Improper middleware value
 The middleware provided is not reconized as appropiate middleware format
-###Joi Validation
+
+### Joi Validation
 Joi is used to validate certain parameters and will return an error, native to its code, if needed
 
-##start
+## start
 Start the server listener
 
  **Usage**
@@ -28,7 +28,7 @@ const server = require....
 server.start()
 ```
 
-##stop
+## stop
 Stops the server listener
 
  **Usage**
@@ -37,7 +37,7 @@ const server = require....
 server.stop()
 ```
 
-#Configuration
+# Configuration
 
 ## Generic Server Configuration
 
@@ -140,18 +140,14 @@ See [apiRoutes](#default-apiRoutes)
 * Default - undefined
 * Object Type - Function
 
-
-
-#Default Middleware
-
-##sessionSecurity
-
+# Default Middleware
+## sessionSecurity
 <a name="default-sessionSecurity"></a>
 ```
 require('helmet')()
 ```
 
-##sessionPrep
+## sessionPrep
 <a name="default-sessionPrep"></a>
 ```
 require('express').Router().use((req, res, next) => {
@@ -167,7 +163,7 @@ require('express').Router().use((req, res, next) => {
 }
 ```
 
-##sessionOpenLogging
+## sessionOpenLogging
 <a name="default-sessionOpenLogging"></a>
 ```
 require('express').Router().use((req, res, next) => {
@@ -197,7 +193,7 @@ require('express').Router().use((req, res, next) => {
 }
 ```
 
-##systemCORS
+## systemCORS
 <a name="default-systemCORS"></a>
 ```
 require('express').Router().use((req, res, next) => {
@@ -208,7 +204,7 @@ require('express').Router().use((req, res, next) => {
 }
 ```
 
-##sessionBodyParser
+## sessionBodyParser
 <a name="default-sessionBodyParser"></a>
 ```
 [
@@ -224,7 +220,7 @@ require('express').Router().use((req, res, next) => {
 ]
 ```
 
-##apiRoutes
+## apiRoutes
 <a name="default-apiRoutes"></a>
 ```
 require('express').Router().get('/', (req, res, next) => {
@@ -236,7 +232,7 @@ require('express').Router().get('/', (req, res, next) => {
 }
 ```
 
-##responseFormatter
+## responseFormatter
 <a name="default-responseFormatter"></a>
 ```
 require('express').Router().use((req, res, next) => {
@@ -254,7 +250,7 @@ require('express').Router().use((req, res, next) => {
 }
 ```
 
-##responseErrorFormatter
+## responseErrorFormatter
 <a name="default-responseErrorFormatter"></a>
 ```
 require('express').Router().use((err, req, res, next) => {
@@ -271,7 +267,7 @@ require('express').Router().use((err, req, res, next) => {
 }
 ```
 
-##healthCheckRoute
+## healthCheckRoute
 <a name="default-healthCheckRoute"></a>
 ```
 require('express').Router().get('/healthcheck', (req, res, next) => {
