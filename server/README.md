@@ -141,8 +141,11 @@ See [apiRoutes](#default-apiRoutes)
 * Object Type - Function
 
 
+
 #Default Middleware
+
 ##sessionSecurity
+
 <a name="default-sessionSecurity"></a>
 ```
 require('helmet')()
