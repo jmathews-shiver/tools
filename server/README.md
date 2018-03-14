@@ -193,6 +193,7 @@ require('express').Router().use((req, res, next) => {
   next();
 }
 ```
+
 ##systemCORS
 <a name="default-systemCORS"></a>
 ```
