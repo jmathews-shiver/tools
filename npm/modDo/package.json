@@ -1,0 +1,30 @@
+{
+  "name": "moddo",
+  "version": "1.0.7",
+  "description": "",
+  "main": "./lib/moddo.js",
+  "scripts": {
+    "test": "npm update; mocha ./tests/**/*test.js",
+    "docgen": "documentation build lib/*.js -f md > README.md",
+    "push": "npm publish"
+  },
+  "keywords": [
+    "moddo",
+    "module",
+    "import"
+  ],
+  "author": {
+    "name": "Justin Mathews",
+    "email": "ponddiver1@gmail.com"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "objcheck": "^1.0.6"
+  },
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "should": "^13.2.1",
+    "sinon": "^4.4.9",
+    "sinon-chai": "^3.1.0"
+  }
+}
