@@ -1,0 +1,8 @@
+{    "files.glob": "/git-repos/**/npm/*/tests/*.test.js",
+    "files.ignore": [
+        "**/.git/**/*",
+        "**/node_modules/**/*",
+        "**/lib/**/*"
+    ],
+    "logVerbose": true,
+}}
