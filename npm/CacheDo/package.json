@@ -1,0 +1,28 @@
+{
+  "name": "cachedo",
+  "version": "1.0.0",
+  "main": "./lib/CacheDo.js",
+  "directories": {
+    "lib": "lib",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "npm update; mocha ./tests/**/*test.js",
+    "docgen": "documentation build lib/*.js -f md > README.md",
+    "push": "npm publish"
+  },
+  "author": "Justin Mathews <ponddiver1@gmail.com>",
+  "license": "ISC",
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "should": "^13.2.1",
+    "sinon": "^4.4.9",
+    "sinon-chai": "^3.0.0"
+  },
+  "keywords": [],
+  "description": "",
+  "dependencies": {
+    "jsondo": "^2.0.3",
+    "objcheck": "^1.0.6"
+  }
+}
